@@ -696,10 +696,111 @@ body {
   flex-direction: column;
   gap: 4px;
   margin-top: 8px;
+  position: relative;
+}
+
+.cookie-value-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .cookie-detail-value-block .cookie-detail-label {
   min-width: 0;
+}
+
+.decode-btn {
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.decode-btn:hover {
+  border-color: var(--border-focus);
+  background: #ede5d8;
+}
+
+.decode-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 140px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-hover);
+  z-index: 10;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.decode-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  text-align: left;
+  font-size: 12px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.decode-dropdown-item:hover {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.cookie-value-decoded {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: #f0f4f8;
+  border: 1px solid #c5d5e0;
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cookie-value-decoded .decode-method-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.cookie-value-decoded .decode-value-content {
+  margin: 0;
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Monaco, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--text);
+  overflow-x: auto;
+}
+
+.cookie-value-decoded.decode-error {
+  background: #fef3e2;
+  border-color: #f59e0b;
+}
+
+.cookie-value-decoded.decode-error .decode-value-content {
+  color: #9a3412;
+}
+
+.cookie-value-decoded.hidden {
+  display: none;
 }
 
 .cookie-value {

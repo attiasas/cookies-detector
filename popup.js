@@ -46,6 +46,81 @@
   let greylist = [];
   const expandedKeys = new Set();
 
+  /** Value decoders: add { id, label, decode(str) } where decode returns { ok, value } or { ok: false, error }. */
+  const VALUE_DECODERS = [
+    {
+      id: 'base64',
+      label: 'Base64',
+      decode(str) {
+        try {
+          const normalized = str.replace(/-/g, '+').replace(/_/g, '/');
+          const padded = normalized + '=='.slice(0, (4 - (normalized.length % 4)) % 4);
+          const binary = atob(padded);
+          const bytes = new Uint8Array([...binary].map((c) => c.charCodeAt(0)));
+          const value = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+          return { ok: true, value };
+        } catch (e) {
+          return { ok: false, error: e.message || 'Invalid Base64' };
+        }
+      },
+    },
+    {
+      id: 'url',
+      label: 'URL decode',
+      decode(str) {
+        try {
+          return { ok: true, value: decodeURIComponent(str.replace(/\+/g, ' ')) };
+        } catch (e) {
+          return { ok: false, error: e.message || 'Invalid URL encoding' };
+        }
+      },
+    },
+    {
+      id: 'json',
+      label: 'JSON (pretty)',
+      decode(str) {
+        try {
+          const parsed = JSON.parse(str);
+          return { ok: true, value: JSON.stringify(parsed, null, 2) };
+        } catch (e) {
+          return { ok: false, error: e.message || 'Invalid JSON' };
+        }
+      },
+    },
+    {
+      id: 'hex',
+      label: 'Hex to UTF-8',
+      decode(str) {
+        try {
+          const hex = str.replace(/\s/g, '');
+          if (!/^[0-9a-fA-F]*$/.test(hex) || hex.length % 2 !== 0) {
+            return { ok: false, error: 'Not valid hex (even length hex string)' };
+          }
+          const bytes = new Uint8Array(hex.match(/.{2}/g).map((b) => parseInt(b, 16)));
+          return { ok: true, value: new TextDecoder().decode(bytes) };
+        } catch (e) {
+          return { ok: false, error: e.message || 'Hex decode failed' };
+        }
+      },
+    },
+    {
+      id: 'utf8',
+      label: 'UTF-8 bytes to string',
+      decode(str) {
+        try {
+          const parts = str.split(/[\s,]+/).filter(Boolean);
+          const bytes = parts.map((p) => parseInt(p, 10));
+          if (bytes.some((b) => isNaN(b) || b < 0 || b > 255)) {
+            return { ok: false, error: 'Expected decimal byte values (0–255)' };
+          }
+          return { ok: true, value: new TextDecoder().decode(new Uint8Array(bytes)) };
+        } catch (e) {
+          return { ok: false, error: e.message || 'Decode failed' };
+        }
+      },
+    },
+  ];
+
   function loadBlacklists() {
     return new Promise((resolve) => {
       chrome.storage.local.get(
@@ -268,7 +343,14 @@
       const valueHighlightEntries = [...greylist, ...blacklistValues];
       const valueDisplayHtml = highlightMatches(c.value || '', valueHighlightEntries);
       const detailsHtml =
-        '<div class="cookie-detail cookie-detail-value-block"><span class="cookie-detail-label">Value</span><pre class="cookie-value">' + valueDisplayHtml + '</pre></div>' +
+        '<div class="cookie-detail cookie-detail-value-block">' +
+        '<div class="cookie-value-header">' +
+        '<span class="cookie-detail-label">Value</span>' +
+        '<button type="button" class="decode-btn" title="Try decoding value">Decode ▼</button>' +
+        '</div>' +
+        '<pre class="cookie-value">' + valueDisplayHtml + '</pre>' +
+        '<div class="cookie-value-decoded hidden" role="region" aria-label="Decoded value"></div>' +
+        '</div>' +
         domainSegment +
         pathSegment +
         '<div class="cookie-detail"><span class="cookie-detail-label">Expires</span><span class="cookie-detail-value">' + escapeHtml(String(expiryFull)) + '</span></div>' +
@@ -295,6 +377,15 @@
         '<div class="cookie-details" hidden>' + detailsHtml + '</div>';
       list.appendChild(li);
 
+      const valueBlock = li.querySelector('.cookie-detail-value-block');
+      if (valueBlock) {
+        setupDecodeButton(
+          valueBlock.querySelector('.decode-btn'),
+          valueBlock.querySelector('.cookie-value-decoded'),
+          c.value
+        );
+      }
+
       const row = li.querySelector('.cookie-row');
       const details = li.querySelector('.cookie-details');
       row.addEventListener('click', () => {
@@ -313,6 +404,56 @@
       if (isExpanded) {
         details.hidden = false;
       }
+    });
+  }
+
+  function setupDecodeButton(decodeBtn, decodedBlock, rawValue) {
+    if (!decodeBtn || !decodedBlock || rawValue == null) return;
+    let dropdown = null;
+    function closeDropdown() {
+      if (dropdown) {
+        dropdown.remove();
+        dropdown = null;
+      }
+    }
+    decodeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (dropdown) {
+        closeDropdown();
+        return;
+      }
+      dropdown = document.createElement('div');
+      dropdown.className = 'decode-dropdown';
+      VALUE_DECODERS.forEach((d) => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'decode-dropdown-item';
+        item.textContent = d.label;
+        item.addEventListener('click', () => {
+          const result = d.decode(rawValue);
+          closeDropdown();
+          decodedBlock.classList.remove('decode-error');
+          if (result.ok) {
+            decodedBlock.innerHTML =
+              '<span class="decode-method-label">Decoded (' + escapeHtml(d.label) + '):</span>' +
+              '<pre class="decode-value-content">' + escapeHtml(result.value) + '</pre>';
+            decodedBlock.classList.remove('hidden');
+          } else {
+            decodedBlock.innerHTML = '<span class="decode-method-label">Error:</span><pre class="decode-value-content">' + escapeHtml(result.error || 'Unknown') + '</pre>';
+            decodedBlock.classList.add('decode-error');
+            decodedBlock.classList.remove('hidden');
+          }
+        });
+        dropdown.appendChild(item);
+      });
+      decodeBtn.closest('.cookie-detail-value-block').appendChild(dropdown);
+      const onOutside = (e) => {
+        if (dropdown && !dropdown.contains(e.target) && !decodeBtn.contains(e.target)) {
+          closeDropdown();
+          document.removeEventListener('click', onOutside);
+        }
+      };
+      document.addEventListener('click', onOutside);
     });
   }
 
