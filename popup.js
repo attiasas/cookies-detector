@@ -250,7 +250,6 @@
         ? new Date(c.expirationDate * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })
         : 'Session';
       const domainRaw = c.domain || '—';
-      const nameDisplay = escapeHtml(c.name);
       const domainDisplay = escapeHtml(domainRaw);
       const expiryDisplay = escapeHtml(String(expiryShort));
 
@@ -264,8 +263,10 @@
 
       const pathSegment = (c.path && c.path !== '/') ? ('<div class="cookie-detail"><span class="cookie-detail-label">Path</span><span class="cookie-detail-value">' + escapeHtml(c.path) + '</span></div>') : '';
       const domainSegment = hasThirdParty ? ('<div class="cookie-detail"><span class="cookie-detail-label">Domain</span><span class="cookie-detail-value">' + escapeHtml(c.domain || '—') + '</span></div>') : '';
+      const nameHighlightEntries = [...greylist, ...blacklistNames];
+      const nameDisplay = highlightMatches(c.name || '', nameHighlightEntries);
       const valueHighlightEntries = [...greylist, ...blacklistValues];
-      const valueDisplayHtml = highlightValueMatches(c.value || '', valueHighlightEntries);
+      const valueDisplayHtml = highlightMatches(c.value || '', valueHighlightEntries);
       const detailsHtml =
         '<div class="cookie-detail cookie-detail-value-block"><span class="cookie-detail-label">Value</span><pre class="cookie-value">' + valueDisplayHtml + '</pre></div>' +
         domainSegment +
@@ -283,7 +284,7 @@
       const flagsRow = flagBadges.length ? '<span class="cookie-flags-row">' + flagBadges.join('') + '</span>' : '';
       li.innerHTML =
         '<button type="button" class="cookie-row" aria-expanded="' + isExpanded + '">' +
-        '<span class="cookie-row-name" title="' + nameDisplay + '">' + nameDisplay + '</span>' +
+        '<span class="cookie-row-name" title="' + escapeHtml(c.name) + '">' + nameDisplay + '</span>' +
         '<span class="cookie-row-meta">' + rowMeta + '</span>' +
         flagsRow +
         (greylisted ? '<span class="cookie-badge-greylist" title="Matches greylist (watch)">GL</span>' : '') +
@@ -321,23 +322,23 @@
     return div.innerHTML;
   }
 
-  /** Build HTML for value with list-match substrings wrapped in <span class="value-match"> for highlighting. */
-  function highlightValueMatches(valueStr, listEntries) {
-    if (!valueStr || !listEntries.length) return escapeHtml(valueStr);
-    const valueLower = valueStr.toLowerCase();
+  /** Build HTML with list-match substrings wrapped in <span class="value-match"> for highlighting (used for name and value). */
+  function highlightMatches(str, listEntries) {
+    if (!str || !listEntries.length) return escapeHtml(str);
+    const strLower = str.toLowerCase();
     const ranges = [];
     for (const entry of listEntries) {
       const term = String(entry).toLowerCase().trim();
       if (!term) continue;
       let pos = 0;
       while (true) {
-        const idx = valueLower.indexOf(term, pos);
+        const idx = strLower.indexOf(term, pos);
         if (idx === -1) break;
         ranges.push([idx, idx + term.length]);
         pos = idx + 1;
       }
     }
-    if (ranges.length === 0) return escapeHtml(valueStr);
+    if (ranges.length === 0) return escapeHtml(str);
     ranges.sort((a, b) => a[0] - b[0]);
     const merged = [];
     for (const [s, e] of ranges) {
@@ -350,11 +351,11 @@
     let html = '';
     let lastEnd = 0;
     for (const [s, e] of merged) {
-      html += escapeHtml(valueStr.slice(lastEnd, s));
-      html += '<span class="value-match">' + escapeHtml(valueStr.slice(s, e)) + '</span>';
+      html += escapeHtml(str.slice(lastEnd, s));
+      html += '<span class="value-match">' + escapeHtml(str.slice(s, e)) + '</span>';
       lastEnd = e;
     }
-    html += escapeHtml(valueStr.slice(lastEnd));
+    html += escapeHtml(str.slice(lastEnd));
     return html;
   }
 
