@@ -129,7 +129,7 @@
         ? new Date(c.expirationDate * 1000).toLocaleString()
         : 'Session';
 
-      const pathSegment = '<div class="cookie-detail"><span class="cookie-detail-label">Path</span><span class="cookie-detail-value">' + escapeHtml(c.path || '/') + '</span></div>';
+      const pathSegment = (c.path && c.path !== '/') ? ('<div class="cookie-detail"><span class="cookie-detail-label">Path</span><span class="cookie-detail-value">' + escapeHtml(c.path) + '</span></div>') : '';
       const domainSegment = hasThirdParty ? ('<div class="cookie-detail"><span class="cookie-detail-label">Domain</span><span class="cookie-detail-value">' + escapeHtml(c.domain || '—') + '</span></div>') : '';
       const detailsHtml =
         '<div class="cookie-detail cookie-detail-value-block"><span class="cookie-detail-label">Value</span><pre class="cookie-value">' + escapeHtml(c.value || '') + '</pre></div>' +
