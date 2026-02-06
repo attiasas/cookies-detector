@@ -6,6 +6,7 @@
     totalCount: document.getElementById('total-count'),
     firstPartyCount: document.getElementById('first-party-count'),
     thirdPartyCount: document.getElementById('third-party-count'),
+    statThird: document.getElementById('stat-third'),
     cookieList: document.getElementById('cookie-list'),
     emptyState: document.getElementById('empty-state'),
     errorState: document.getElementById('error-state'),
@@ -102,6 +103,7 @@
     elements.errorState.hidden = true;
 
     const siteHostname = new URL(currentOrigin || 'https://x').hostname;
+    const hasThirdParty = cookies.some((c) => isThirdParty(c, siteHostname));
 
     filtered.forEach((c) => {
       const key = cookieKey(c);
@@ -128,16 +130,18 @@
         : 'Session';
 
       const pathSegment = (c.path && c.path !== '/') ? ('<div class="cookie-detail"><span class="cookie-detail-label">Path</span><span class="cookie-detail-value">' + escapeHtml(c.path) + '</span></div>') : '';
+      const domainSegment = hasThirdParty ? ('<div class="cookie-detail"><span class="cookie-detail-label">Domain</span><span class="cookie-detail-value">' + escapeHtml(c.domain || '—') + '</span></div>') : '';
       const detailsHtml =
         '<div class="cookie-detail cookie-detail-value-block"><span class="cookie-detail-label">Value</span><pre class="cookie-value">' + escapeHtml(c.value || '') + '</pre></div>' +
-        '<div class="cookie-detail"><span class="cookie-detail-label">Domain</span><span class="cookie-detail-value">' + escapeHtml(c.domain || '—') + '</span></div>' +
+        domainSegment +
         pathSegment +
         '<div class="cookie-detail"><span class="cookie-detail-label">Expires</span><span class="cookie-detail-value">' + escapeHtml(String(expiryFull)) + '</span></div>' +
         '<div class="cookie-detail"><span class="cookie-detail-label">Flags</span><span class="cookie-detail-value">' + escapeHtml(meta) + '</span></div>';
+      const rowMeta = hasThirdParty ? (domainDisplay + ' · ' + expiryDisplay) : expiryDisplay;
       li.innerHTML =
         '<button type="button" class="cookie-row" aria-expanded="' + isExpanded + '">' +
         '<span class="cookie-row-name" title="' + nameDisplay + '">' + nameDisplay + '</span>' +
-        '<span class="cookie-row-meta">' + domainDisplay + ' · ' + expiryDisplay + '</span>' +
+        '<span class="cookie-row-meta">' + rowMeta + '</span>' +
         (third ? '<span class="cookie-badge">3rd</span>' : '') +
         '<span class="cookie-chevron" aria-hidden="true"></span>' +
         '</button>' +
@@ -187,6 +191,7 @@
     elements.totalCount.textContent = String(cookies.length);
     elements.firstPartyCount.textContent = String(first);
     elements.thirdPartyCount.textContent = String(third);
+    elements.statThird.hidden = third === 0;
   }
 
   function showError(msg) {
@@ -197,6 +202,7 @@
     elements.totalCount.textContent = '0';
     elements.firstPartyCount.textContent = '0';
     elements.thirdPartyCount.textContent = '0';
+    elements.statThird.hidden = true;
   }
 
   function load() {

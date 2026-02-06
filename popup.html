@@ -9,24 +9,18 @@
 <body>
   <div class="container">
     <header class="header">
-      <h1 class="title">Cookies Detector</h1>
-      <p class="subtitle" id="site-domain">Loading…</p>
+      <div class="header-top">
+        <div class="header-titles">
+          <h1 class="title">Cookies Detector</h1>
+          <p class="subtitle" id="site-domain">Loading…</p>
+        </div>
+        <div class="stats-inline" id="stats">
+          <span class="stat-inline"><span class="stat-inline-value" id="total-count">0</span> total</span>
+          <span class="stat-inline"><span class="stat-inline-value" id="first-party-count">0</span> 1st</span>
+          <span class="stat-inline stat-third" id="stat-third" hidden><span class="stat-inline-value" id="third-party-count">0</span> 3rd</span>
+        </div>
+      </div>
     </header>
-
-    <div class="stats" id="stats">
-      <div class="stat">
-        <span class="stat-value" id="total-count">0</span>
-        <span class="stat-label">Total cookies</span>
-      </div>
-      <div class="stat">
-        <span class="stat-value" id="first-party-count">0</span>
-        <span class="stat-label">First-party</span>
-      </div>
-      <div class="stat">
-        <span class="stat-value" id="third-party-count">0</span>
-        <span class="stat-label">Third-party</span>
-      </div>
-    </div>
 
     <div class="toolbar">
       <label class="search-wrap">
