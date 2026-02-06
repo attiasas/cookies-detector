@@ -44,6 +44,7 @@
   let blacklistNames = [];
   let blacklistValues = [];
   let greylist = [];
+  const expandedKeys = new Set();
 
   function loadBlacklists() {
     return new Promise((resolve) => {
