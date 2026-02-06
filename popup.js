@@ -127,6 +127,13 @@
         ? new Date(c.expirationDate * 1000).toLocaleString()
         : 'Session';
 
+      const pathSegment = (c.path && c.path !== '/') ? ('<div class="cookie-detail"><span class="cookie-detail-label">Path</span><span class="cookie-detail-value">' + escapeHtml(c.path) + '</span></div>') : '';
+      const detailsHtml =
+        '<div class="cookie-detail cookie-detail-value-block"><span class="cookie-detail-label">Value</span><pre class="cookie-value">' + escapeHtml(c.value || '') + '</pre></div>' +
+        '<div class="cookie-detail"><span class="cookie-detail-label">Domain</span><span class="cookie-detail-value">' + escapeHtml(c.domain || '—') + '</span></div>' +
+        pathSegment +
+        '<div class="cookie-detail"><span class="cookie-detail-label">Expires</span><span class="cookie-detail-value">' + escapeHtml(String(expiryFull)) + '</span></div>' +
+        '<div class="cookie-detail"><span class="cookie-detail-label">Flags</span><span class="cookie-detail-value">' + escapeHtml(meta) + '</span></div>';
       li.innerHTML =
         '<button type="button" class="cookie-row" aria-expanded="' + isExpanded + '">' +
         '<span class="cookie-row-name" title="' + nameDisplay + '">' + nameDisplay + '</span>' +
@@ -134,13 +141,7 @@
         (third ? '<span class="cookie-badge">3rd</span>' : '') +
         '<span class="cookie-chevron" aria-hidden="true"></span>' +
         '</button>' +
-        '<div class="cookie-details" hidden>' +
-        '<div class="cookie-detail"><span class="cookie-detail-label">Domain</span><span class="cookie-detail-value">' + escapeHtml(c.domain || '—') + '</span></div>' +
-        '<div class="cookie-detail"><span class="cookie-detail-label">Path</span><span class="cookie-detail-value">' + escapeHtml(c.path || '/') + '</span></div>' +
-        '<div class="cookie-detail"><span class="cookie-detail-label">Expires</span><span class="cookie-detail-value">' + escapeHtml(String(expiryFull)) + '</span></div>' +
-        '<div class="cookie-detail"><span class="cookie-detail-label">Flags</span><span class="cookie-detail-value">' + escapeHtml(meta) + '</span></div>' +
-        '<div class="cookie-detail cookie-detail-value-block"><span class="cookie-detail-label">Value</span><pre class="cookie-value">' + escapeHtml(c.value || '') + '</pre></div>' +
-        '</div>';
+        '<div class="cookie-details" hidden>' + detailsHtml + '</div>';
       list.appendChild(li);
 
       const row = li.querySelector('.cookie-row');

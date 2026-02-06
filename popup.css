@@ -69,12 +69,6 @@ body {
   word-break: break-all;
 }
 
-.header-hint {
-  margin: 6px 0 0 0;
-  font-size: 11px;
-  color: var(--text-dim);
-}
-
 /* Stats */
 .stats {
   display: grid;
