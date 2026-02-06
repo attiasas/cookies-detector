@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Cookies Detector",
+  "version": "1.0.0",
+  "description": "See what cookies each site you browse is using",
+  "permissions": [
+    "cookies",
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Cookies Detector"
+  }
+}

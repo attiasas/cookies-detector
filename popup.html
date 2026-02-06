@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cookies Detector</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="title">Cookies Detector</h1>
+      <p class="subtitle" id="site-domain">Loading…</p>
+    </header>
+
+    <div class="stats" id="stats">
+      <div class="stat">
+        <span class="stat-value" id="total-count">0</span>
+        <span class="stat-label">Total cookies</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="first-party-count">0</span>
+        <span class="stat-label">First-party</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="third-party-count">0</span>
+        <span class="stat-label">Third-party</span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <label class="search-wrap">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input type="search" id="search" class="search" placeholder="Filter by name or value…" />
+      </label>
+      <button type="button" id="refresh" class="btn btn-ghost" title="Refresh">↻ Refresh</button>
+    </div>
+
+    <div class="cookie-list-wrap">
+      <ul class="cookie-list" id="cookie-list"></ul>
+      <div class="empty-state" id="empty-state" hidden>
+        <p>No cookies found for this site.</p>
+        <p class="empty-hint">Cookies appear when you visit and interact with a page.</p>
+      </div>
+      <div class="error-state" id="error-state" hidden>
+        <p id="error-message">Something went wrong.</p>
+      </div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
