@@ -16,6 +16,11 @@
 
   let currentOrigin = '';
   let allCookies = [];
+  const expandedKeys = new Set();
+
+  function cookieKey(c) {
+    return (c.name || '') + '\0' + (c.domain || '') + '\0' + (c.path || '');
+  }
 
   function getCurrentTabUrl() {
     return new Promise((resolve, reject) => {
@@ -99,36 +104,63 @@
     const siteHostname = new URL(currentOrigin || 'https://x').hostname;
 
     filtered.forEach((c) => {
+      const key = cookieKey(c);
+      const isExpanded = expandedKeys.has(key);
+      const third = isThirdParty(c, siteHostname);
       const li = document.createElement('li');
-      li.className = 'cookie-item' + (isThirdParty(c, siteHostname) ? ' third-party' : '');
+      li.className = 'cookie-item' + (third ? ' third-party' : '') + (isExpanded ? ' is-expanded' : '');
+      li.dataset.cookieKey = key;
+
+      const expiryShort = c.expirationDate
+        ? new Date(c.expirationDate * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })
+        : 'Session';
+      const domainShort = (c.domain || '—').replace(/^\./, '');
+      const nameDisplay = escapeHtml(c.name);
+      const domainDisplay = escapeHtml(domainShort);
+      const expiryDisplay = escapeHtml(String(expiryShort));
+
       const secure = c.secure ? 'Secure' : '';
       const httpOnly = c.httpOnly ? 'HttpOnly' : '';
       const sameSite = c.sameSite ? `SameSite=${c.sameSite}` : '';
       const meta = [secure, httpOnly, sameSite].filter(Boolean).join(' · ') || '—';
-      const expiry = c.expirationDate
+      const expiryFull = c.expirationDate
         ? new Date(c.expirationDate * 1000).toLocaleString()
         : 'Session';
+
       li.innerHTML =
-        '<div class="cookie-name" title="' +
-        escapeHtml(c.name) +
-        '">' +
-        escapeHtml(c.name) +
-        '</div>' +
-        '<div class="cookie-meta">' +
-        '<span title="Domain">' +
-        escapeHtml(c.domain || '—') +
-        '</span>' +
-        '<span>Expires: ' +
-        escapeHtml(String(expiry)) +
-        '</span>' +
-        '</div>' +
-        '<div class="cookie-meta">' +
-        escapeHtml(meta) +
-        '</div>' +
-        '<div class="cookie-value-wrap"><span class="cookie-value">' +
-        escapeHtml(truncate(c.value, 200)) +
-        '</span></div>';
+        '<button type="button" class="cookie-row" aria-expanded="' + isExpanded + '">' +
+        '<span class="cookie-row-name" title="' + nameDisplay + '">' + nameDisplay + '</span>' +
+        '<span class="cookie-row-meta">' + domainDisplay + ' · ' + expiryDisplay + '</span>' +
+        (third ? '<span class="cookie-badge">3rd</span>' : '') +
+        '<span class="cookie-chevron" aria-hidden="true"></span>' +
+        '</button>' +
+        '<div class="cookie-details" hidden>' +
+        '<div class="cookie-detail"><span class="cookie-detail-label">Domain</span><span class="cookie-detail-value">' + escapeHtml(c.domain || '—') + '</span></div>' +
+        '<div class="cookie-detail"><span class="cookie-detail-label">Path</span><span class="cookie-detail-value">' + escapeHtml(c.path || '/') + '</span></div>' +
+        '<div class="cookie-detail"><span class="cookie-detail-label">Expires</span><span class="cookie-detail-value">' + escapeHtml(String(expiryFull)) + '</span></div>' +
+        '<div class="cookie-detail"><span class="cookie-detail-label">Flags</span><span class="cookie-detail-value">' + escapeHtml(meta) + '</span></div>' +
+        '<div class="cookie-detail cookie-detail-value-block"><span class="cookie-detail-label">Value</span><pre class="cookie-value">' + escapeHtml(c.value || '') + '</pre></div>' +
+        '</div>';
       list.appendChild(li);
+
+      const row = li.querySelector('.cookie-row');
+      const details = li.querySelector('.cookie-details');
+      row.addEventListener('click', () => {
+        if (expandedKeys.has(key)) {
+          expandedKeys.delete(key);
+          details.hidden = true;
+          row.setAttribute('aria-expanded', 'false');
+          li.classList.remove('is-expanded');
+        } else {
+          expandedKeys.add(key);
+          details.hidden = false;
+          row.setAttribute('aria-expanded', 'true');
+          li.classList.add('is-expanded');
+        }
+      });
+      if (isExpanded) {
+        details.hidden = false;
+      }
     });
   }
 
