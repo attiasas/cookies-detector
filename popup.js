@@ -346,7 +346,7 @@
         '<div class="cookie-detail cookie-detail-value-block">' +
         '<div class="cookie-value-header">' +
         '<span class="cookie-detail-label">Value</span>' +
-        '<button type="button" class="decode-btn" title="Try decoding value">Decode ▼</button>' +
+        '<span class="decode-btn-wrap"><button type="button" class="decode-btn" title="Try decoding value">Decode ▼</button></span>' +
         '</div>' +
         '<pre class="cookie-value">' + valueDisplayHtml + '</pre>' +
         '<div class="cookie-value-decoded hidden" role="region" aria-label="Decoded value"></div>' +
@@ -446,7 +446,7 @@
         });
         dropdown.appendChild(item);
       });
-      decodeBtn.closest('.cookie-detail-value-block').appendChild(dropdown);
+      decodeBtn.closest('.decode-btn-wrap').appendChild(dropdown);
       const onOutside = (e) => {
         if (dropdown && !dropdown.contains(e.target) && !decodeBtn.contains(e.target)) {
           closeDropdown();

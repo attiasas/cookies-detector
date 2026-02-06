@@ -710,6 +710,11 @@ body {
   min-width: 0;
 }
 
+.decode-btn-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
 .decode-btn {
   padding: 4px 8px;
   font-size: 11px;
@@ -730,9 +735,13 @@ body {
 .decode-dropdown {
   position: absolute;
   top: 100%;
-  left: 0;
+  right: 0;
+  left: auto;
   margin-top: 4px;
   min-width: 140px;
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -742,6 +751,23 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.decode-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.decode-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.decode-dropdown::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.decode-dropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
 }
 
 .decode-dropdown-item {
