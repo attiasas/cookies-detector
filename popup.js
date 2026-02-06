@@ -14,7 +14,6 @@
     errorMessage: document.getElementById('error-message'),
     search: document.getElementById('search'),
     refresh: document.getElementById('refresh'),
-    btnSettings: document.getElementById('btn-settings'),
     stats: document.getElementById('stats'),
     headerRight: document.getElementById('header-right'),
     configToggle: document.getElementById('config-toggle'),
@@ -397,7 +396,6 @@
   }
 
   elements.configToggle.addEventListener('click', openSettings);
-  elements.btnSettings.addEventListener('click', openSettings);
 
   elements.configClose.addEventListener('click', () => {
     showConfig(false);

@@ -33,7 +33,7 @@ A Chrome extension that shows which cookies each site you visit is using. Open t
 
 ### Settings (one place for all config)
 
-- **One settings page** for all lists (and any future extension options). Open it from the main page via the **Settings** button in the toolbar or the **gear icon** in the header. The cookie list is hidden while settings are open so the full space is used for configuration.
+- **One settings page** for all lists (and any future extension options). Open it from the main page via the **gear icon** in the header. The cookie list is hidden while settings are open so the full space is used for configuration.
 - **Settings apply to all sites** – Configure greylist and blacklist once; they are used on every site you visit. You do not need to set anything per site.
 - Add or remove entries for greylist and blacklist (names and values). Lists are saved in local storage and persist across sessions.
 
@@ -70,7 +70,7 @@ No data is sent to any server; everything runs locally in your browser.
 2. Click the **Cookies Detector** icon in the Chrome toolbar.
 3. View the list of cookies (greylisted first, then blacklisted, then others), stats, and use the search box to filter.
 4. Use **↻ Refresh** after logging in or changing the page to see updated cookies.
-5. Use **Settings** (toolbar button or gear icon) to manage greylist and blacklist; matching cookies are highlighted on every site and the icon badge shows how many matches the current site has.
+5. Use the **gear icon** in the header to open Settings and manage greylist and blacklist; matching cookies are highlighted on every site and the icon badge shows how many matches the current site has.
 
 ## Notes
 
