@@ -323,17 +323,35 @@ body {
 
 .cookie-chevron {
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  border-right: 2px solid var(--text-muted);
-  border-bottom: 2px solid var(--text-muted);
-  transform: rotate(45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   margin-left: 4px;
-  transition: transform 0.2s;
+  margin-right: 2px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: transform 0.2s ease, color 0.2s, background 0.15s;
+}
+
+.cookie-row:hover .cookie-chevron {
+  color: var(--text);
+  background: var(--border);
+}
+
+.cookie-chevron svg {
+  display: block;
+  transition: transform 0.2s ease;
 }
 
 .cookie-item.is-expanded .cookie-chevron {
-  transform: rotate(-135deg);
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.cookie-item.is-expanded .cookie-chevron svg {
+  transform: rotate(180deg);
 }
 
 /* Expanded details block */
