@@ -3,20 +3,25 @@
 const STORAGE_KEYS = {
   names: 'blacklistNames',
   values: 'blacklistValues',
-  greyNames: 'greylistNames',
-  greyValues: 'greylistValues',
+  greylist: 'greylist',
 };
 
 function loadLists() {
   return new Promise((resolve) => {
     chrome.storage.local.get(
-      [STORAGE_KEYS.names, STORAGE_KEYS.values, STORAGE_KEYS.greyNames, STORAGE_KEYS.greyValues],
+      [STORAGE_KEYS.names, STORAGE_KEYS.values, STORAGE_KEYS.greylist, 'greylistNames', 'greylistValues'],
       (data) => {
         const blackNames = Array.isArray(data[STORAGE_KEYS.names]) ? data[STORAGE_KEYS.names] : [];
         const blackValues = Array.isArray(data[STORAGE_KEYS.values]) ? data[STORAGE_KEYS.values] : [];
-        const greyNames = Array.isArray(data[STORAGE_KEYS.greyNames]) ? data[STORAGE_KEYS.greyNames] : [];
-        const greyValues = Array.isArray(data[STORAGE_KEYS.greyValues]) ? data[STORAGE_KEYS.greyValues] : [];
-        resolve({ blackNames, blackValues, greyNames, greyValues });
+        let greyList;
+        if (Array.isArray(data[STORAGE_KEYS.greylist])) {
+          greyList = data[STORAGE_KEYS.greylist];
+        } else {
+          const oldNames = Array.isArray(data.greylistNames) ? data.greylistNames : [];
+          const oldValues = Array.isArray(data.greylistValues) ? data.greylistValues : [];
+          greyList = [...new Set([...oldNames, ...oldValues])];
+        }
+        resolve({ blackNames, blackValues, greyList });
       }
     );
   });
@@ -34,8 +39,8 @@ function isBlacklisted(cookie, blackNames, blackValues) {
   return matchesList(cookie, blackNames, blackValues);
 }
 
-function isGreylisted(cookie, greyNames, greyValues) {
-  return matchesList(cookie, greyNames, greyValues);
+function isGreylisted(cookie, greyList) {
+  return matchesList(cookie, greyList, greyList);
 }
 
 function getCookiesForUrl(url) {
@@ -79,12 +84,9 @@ async function updateBadgeForTab(tabId) {
   const blackCount = cookies.filter((c) =>
     isBlacklisted(c, lists.blackNames, lists.blackValues)
   ).length;
-  const greyCount = cookies.filter((c) =>
-    isGreylisted(c, lists.greyNames, lists.greyValues)
-  ).length;
   const matchCount = new Set(
     cookies
-      .filter((c) => isBlacklisted(c, lists.blackNames, lists.blackValues) || isGreylisted(c, lists.greyNames, lists.greyValues))
+      .filter((c) => isBlacklisted(c, lists.blackNames, lists.blackValues) || isGreylisted(c, lists.greyList))
       .map((c) => c.name + c.domain + c.path)
   ).size;
   if (matchCount > 0) {
@@ -120,6 +122,6 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
-  const listKeys = [STORAGE_KEYS.names, STORAGE_KEYS.values, STORAGE_KEYS.greyNames, STORAGE_KEYS.greyValues];
+  const listKeys = [STORAGE_KEYS.names, STORAGE_KEYS.values, STORAGE_KEYS.greylist];
   if (listKeys.some((k) => k in changes)) updateBadgeForActiveTab();
 });

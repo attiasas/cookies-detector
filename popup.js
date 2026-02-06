@@ -28,38 +28,38 @@
     blacklistValueInput: document.getElementById('blacklist-value-input'),
     blacklistValueAdd: document.getElementById('blacklist-value-add'),
     blacklistValues: document.getElementById('blacklist-values'),
-    greylistNameInput: document.getElementById('greylist-name-input'),
-    greylistNameAdd: document.getElementById('greylist-name-add'),
-    greylistNames: document.getElementById('greylist-names'),
-    greylistValueInput: document.getElementById('greylist-value-input'),
-    greylistValueAdd: document.getElementById('greylist-value-add'),
-    greylistValues: document.getElementById('greylist-values'),
+    greylistInput: document.getElementById('greylist-input'),
+    greylistAdd: document.getElementById('greylist-add'),
+    greylistTags: document.getElementById('greylist-tags'),
   };
 
   const STORAGE_KEYS = {
     names: 'blacklistNames',
     values: 'blacklistValues',
-    greyNames: 'greylistNames',
-    greyValues: 'greylistValues',
+    greylist: 'greylist',
   };
 
   let currentOrigin = '';
   let allCookies = [];
   let blacklistNames = [];
   let blacklistValues = [];
-  let greylistNames = [];
-  let greylistValues = [];
-  const expandedKeys = new Set();
+  let greylist = [];
 
   function loadBlacklists() {
     return new Promise((resolve) => {
       chrome.storage.local.get(
-        [STORAGE_KEYS.names, STORAGE_KEYS.values, STORAGE_KEYS.greyNames, STORAGE_KEYS.greyValues],
+        [STORAGE_KEYS.names, STORAGE_KEYS.values, STORAGE_KEYS.greylist, 'greylistNames', 'greylistValues'],
         (data) => {
           blacklistNames = Array.isArray(data[STORAGE_KEYS.names]) ? data[STORAGE_KEYS.names] : [];
           blacklistValues = Array.isArray(data[STORAGE_KEYS.values]) ? data[STORAGE_KEYS.values] : [];
-          greylistNames = Array.isArray(data[STORAGE_KEYS.greyNames]) ? data[STORAGE_KEYS.greyNames] : [];
-          greylistValues = Array.isArray(data[STORAGE_KEYS.greyValues]) ? data[STORAGE_KEYS.greyValues] : [];
+          if (Array.isArray(data[STORAGE_KEYS.greylist])) {
+            greylist = data[STORAGE_KEYS.greylist];
+          } else {
+            const oldNames = Array.isArray(data.greylistNames) ? data.greylistNames : [];
+            const oldValues = Array.isArray(data.greylistValues) ? data.greylistValues : [];
+            greylist = [...new Set([...oldNames, ...oldValues])];
+            if (greylist.length > 0) chrome.storage.local.set({ [STORAGE_KEYS.greylist]: greylist });
+          }
           resolve();
         }
       );
@@ -72,11 +72,8 @@
   function saveBlacklistValues() {
     chrome.storage.local.set({ [STORAGE_KEYS.values]: blacklistValues });
   }
-  function saveGreylistNames() {
-    chrome.storage.local.set({ [STORAGE_KEYS.greyNames]: greylistNames });
-  }
-  function saveGreylistValues() {
-    chrome.storage.local.set({ [STORAGE_KEYS.greyValues]: greylistValues });
+  function saveGreylist() {
+    chrome.storage.local.set({ [STORAGE_KEYS.greylist]: greylist });
   }
 
   function matchesList(cookie, nameEntries, valueEntries) {
@@ -88,7 +85,7 @@
   }
 
   function isGreylisted(cookie) {
-    return matchesList(cookie, greylistNames, greylistValues);
+    return matchesList(cookie, greylist, greylist);
   }
 
   function isBlacklisted(cookie) {
@@ -129,18 +126,12 @@
       saveBlacklistValues();
       refreshConfigPanelTags();
     };
-    const removeGreyName = (index) => {
-      greylistNames.splice(index, 1);
-      saveGreylistNames();
+    const removeGrey = (index) => {
+      greylist.splice(index, 1);
+      saveGreylist();
       refreshConfigPanelTags();
     };
-    const removeGreyValue = (index) => {
-      greylistValues.splice(index, 1);
-      saveGreylistValues();
-      refreshConfigPanelTags();
-    };
-    renderBlacklistTags(elements.greylistNames, greylistNames, removeGreyName);
-    renderBlacklistTags(elements.greylistValues, greylistValues, removeGreyValue);
+    renderBlacklistTags(elements.greylistTags, greylist, removeGrey);
     renderBlacklistTags(elements.blacklistNames, blacklistNames, removeBlackName);
     renderBlacklistTags(elements.blacklistValues, blacklistValues, removeBlackValue);
   }
@@ -420,41 +411,27 @@
     renderCookies(allCookies, elements.search.value);
   }
 
-  function addGreylistName() {
-    const raw = (elements.greylistNameInput.value || '').trim();
-    if (!raw || greylistNames.includes(raw)) return;
-    greylistNames.push(raw);
-    saveGreylistNames();
-    elements.greylistNameInput.value = '';
-    refreshConfigPanelTags();
-    renderCookies(allCookies, elements.search.value);
-  }
-
-  function addGreylistValue() {
-    const raw = (elements.greylistValueInput.value || '').trim();
-    if (!raw || greylistValues.includes(raw)) return;
-    greylistValues.push(raw);
-    saveGreylistValues();
-    elements.greylistValueInput.value = '';
+  function addGreylist() {
+    const raw = (elements.greylistInput.value || '').trim();
+    if (!raw || greylist.includes(raw)) return;
+    greylist.push(raw);
+    saveGreylist();
+    elements.greylistInput.value = '';
     refreshConfigPanelTags();
     renderCookies(allCookies, elements.search.value);
   }
 
   elements.blacklistNameAdd.addEventListener('click', addBlacklistName);
   elements.blacklistValueAdd.addEventListener('click', addBlacklistValue);
-  elements.greylistNameAdd.addEventListener('click', addGreylistName);
-  elements.greylistValueAdd.addEventListener('click', addGreylistValue);
+  elements.greylistAdd.addEventListener('click', addGreylist);
   elements.blacklistNameInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); addBlacklistName(); }
   });
   elements.blacklistValueInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); addBlacklistValue(); }
   });
-  elements.greylistNameInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); addGreylistName(); }
-  });
-  elements.greylistValueInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); addGreylistValue(); }
+  elements.greylistInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addGreylist(); }
   });
 
   load();

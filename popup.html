@@ -38,20 +38,12 @@
         <h3 class="list-section-title">Greylist</h3>
         <p class="list-section-desc">Cookies to watch or investigate. Match by substring (name or value). Shown first with grey style.</p>
         <div class="blacklist-section">
-          <label class="blacklist-label">Cookie name greylist</label>
+          <label class="blacklist-label">Greylist (name or value)</label>
           <div class="blacklist-add">
-            <input type="text" id="greylist-name-input" class="blacklist-input" placeholder="e.g. _ga, analytics" />
-            <button type="button" id="greylist-name-add" class="btn btn-add btn-add-grey">Add</button>
+            <input type="text" id="greylist-input" class="blacklist-input" placeholder="e.g. _ga, analytics, tracking" />
+            <button type="button" id="greylist-add" class="btn btn-add btn-add-grey">Add</button>
           </div>
-          <ul class="blacklist-tags" id="greylist-names"></ul>
-        </div>
-        <div class="blacklist-section">
-          <label class="blacklist-label">Cookie value greylist</label>
-          <div class="blacklist-add">
-            <input type="text" id="greylist-value-input" class="blacklist-input" placeholder="e.g. tracking" />
-            <button type="button" id="greylist-value-add" class="btn btn-add btn-add-grey">Add</button>
-          </div>
-          <ul class="blacklist-tags" id="greylist-values"></ul>
+          <ul class="blacklist-tags" id="greylist-tags"></ul>
         </div>
       </div>
       <div class="list-section list-section-black">
