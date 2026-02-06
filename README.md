@@ -52,7 +52,7 @@ So you’re notified at a glance when a site has listed cookies, without opening
 
 - When a cookie row is **expanded**, next to the **Value** label there is a **Decode ▼** button.
 - Click it to choose a decoding method; the decoded result (or an error) appears below the raw value.
-- Built-in methods: **Base64**, **URL decode**, **JSON (pretty)**, **Hex to UTF-8**, **UTF-8 bytes to string**. New decoders can be added easily in code.
+- Built-in methods: **Base64**, **URL decode**, **JSON (pretty)**, **Hex to UTF-8**, **UTF-8 bytes to string**, **JWT**, **Unicode escape**, **HTML entities**, **Escape sequences**, **Unix timestamp**, **Base64 → Hex**. New decoders can be added easily in code.
 
 ### Extension icon
 

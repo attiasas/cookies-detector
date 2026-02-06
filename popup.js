@@ -119,6 +119,115 @@
         }
       },
     },
+    {
+      id: 'jwt',
+      label: 'JWT (header + payload)',
+      decode(str) {
+        try {
+          const parts = str.trim().split('.');
+          if (parts.length !== 3) {
+            return { ok: false, error: 'JWT must have 3 parts (header.payload.signature)' };
+          }
+          const decodePart = (part) => {
+            const normalized = part.replace(/-/g, '+').replace(/_/g, '/');
+            const padded = normalized + '=='.slice(0, (4 - (normalized.length % 4)) % 4);
+            const binary = atob(padded);
+            return JSON.stringify(JSON.parse(new TextDecoder().decode(new Uint8Array([...binary].map((c) => c.charCodeAt(0))))), null, 2);
+          };
+          const header = decodePart(parts[0]);
+          const payload = decodePart(parts[1]);
+          return { ok: true, value: 'Header:\n' + header + '\n\nPayload:\n' + payload };
+        } catch (e) {
+          return { ok: false, error: e.message || 'Invalid JWT' };
+        }
+      },
+    },
+    {
+      id: 'unicode-escape',
+      label: 'Unicode escape (\\uXXXX, \\xXX)',
+      decode(str) {
+        try {
+          const value = str.replace(/\\x([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+            .replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+            .replace(/\\U([0-9a-fA-F]{8})/g, (_, h) => {
+              const n = parseInt(h, 16);
+              if (n > 0x10ffff) return '\\U' + h;
+              return n <= 0xffff ? String.fromCharCode(n) : String.fromCodePoint(n);
+            });
+          return { ok: true, value };
+        } catch (e) {
+          return { ok: false, error: e.message || 'Unicode escape failed' };
+        }
+      },
+    },
+    {
+      id: 'html-entities',
+      label: 'HTML entities',
+      decode(str) {
+        try {
+          const textarea = document.createElement('textarea');
+          textarea.innerHTML = str;
+          const value = textarea.value;
+          if (value === str && /&(?:#\d+|#x[0-9a-fA-F]+|\w+);/.test(str)) {
+            return { ok: false, error: 'No entities decoded (unsupported or invalid)' };
+          }
+          return { ok: true, value };
+        } catch (e) {
+          return { ok: false, error: e.message || 'HTML entity decode failed' };
+        }
+      },
+    },
+    {
+      id: 'escape-sequences',
+      label: 'Escape sequences (\\n \\t \\r \\\\)',
+      decode(str) {
+        try {
+          const value = str.replace(/\\\\/g, '\\').replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t').replace(/\\'/g, "'").replace(/\\"/g, '"');
+          return { ok: true, value };
+        } catch (e) {
+          return { ok: false, error: e.message || 'Escape sequence failed' };
+        }
+      },
+    },
+    {
+      id: 'timestamp',
+      label: 'Unix timestamp → date',
+      decode(str) {
+        try {
+          const s = str.trim();
+          const num = /^\d+$/.test(s) ? parseInt(s, 10) : NaN;
+          if (isNaN(num) || num < 0) {
+            return { ok: false, error: 'Not a non-negative integer' };
+          }
+          const ms = num <= 9999999999 ? num * 1000 : num;
+          const d = new Date(ms);
+          if (Number.isNaN(d.getTime())) {
+            return { ok: false, error: 'Invalid date' };
+          }
+          const value = d.toISOString() + ' (' + (num <= 9999999999 ? 'seconds' : 'milliseconds') + ')';
+          return { ok: true, value };
+        } catch (e) {
+          return { ok: false, error: e.message || 'Timestamp failed' };
+        }
+      },
+    },
+    {
+      id: 'base64-hex',
+      label: 'Base64 → Hex dump',
+      decode(str) {
+        try {
+          const normalized = str.replace(/-/g, '+').replace(/_/g, '/');
+          const padded = normalized + '=='.slice(0, (4 - (normalized.length % 4)) % 4);
+          const binary = atob(padded);
+          const bytes = [...binary].map((c) => c.charCodeAt(0));
+          const hex = bytes.map((b) => b.toString(16).padStart(2, '0')).join(' ');
+          const value = hex.toUpperCase().match(/.{1,48}/g).join('\n') || '(empty)';
+          return { ok: true, value };
+        } catch (e) {
+          return { ok: false, error: e.message || 'Invalid Base64' };
+        }
+      },
+    },
   ];
 
   function loadBlacklists() {
@@ -409,6 +518,13 @@
 
   function setupDecodeButton(decodeBtn, decodedBlock, rawValue) {
     if (!decodeBtn || !decodedBlock || rawValue == null) return;
+    const wrap = decodeBtn.closest('.decode-btn-wrap');
+    const workingDecoders = VALUE_DECODERS.filter((d) => d.decode(rawValue).ok);
+    if (workingDecoders.length === 0) {
+      if (wrap) wrap.classList.add('hidden');
+      return;
+    }
+    if (wrap) wrap.classList.remove('hidden');
     let dropdown = null;
     function closeDropdown() {
       if (dropdown) {
@@ -424,7 +540,7 @@
       }
       dropdown = document.createElement('div');
       dropdown.className = 'decode-dropdown';
-      VALUE_DECODERS.forEach((d) => {
+      workingDecoders.forEach((d) => {
         const item = document.createElement('button');
         item.type = 'button';
         item.className = 'decode-dropdown-item';
