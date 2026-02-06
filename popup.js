@@ -6,6 +6,7 @@
     totalCount: document.getElementById('total-count'),
     firstPartyCount: document.getElementById('first-party-count'),
     thirdPartyCount: document.getElementById('third-party-count'),
+    statFirst: document.getElementById('stat-first'),
     statThird: document.getElementById('stat-third'),
     cookieList: document.getElementById('cookie-list'),
     emptyState: document.getElementById('empty-state'),
@@ -13,11 +14,138 @@
     errorMessage: document.getElementById('error-message'),
     search: document.getElementById('search'),
     refresh: document.getElementById('refresh'),
+    btnSettings: document.getElementById('btn-settings'),
+    stats: document.getElementById('stats'),
+    configToggle: document.getElementById('config-toggle'),
+    configPanel: document.getElementById('config-panel'),
+    configClose: document.getElementById('config-close'),
+    mainToolbar: document.getElementById('main-toolbar'),
+    mainContent: document.getElementById('main-content'),
+    blacklistNameInput: document.getElementById('blacklist-name-input'),
+    blacklistNameAdd: document.getElementById('blacklist-name-add'),
+    blacklistNames: document.getElementById('blacklist-names'),
+    blacklistValueInput: document.getElementById('blacklist-value-input'),
+    blacklistValueAdd: document.getElementById('blacklist-value-add'),
+    blacklistValues: document.getElementById('blacklist-values'),
+    greylistNameInput: document.getElementById('greylist-name-input'),
+    greylistNameAdd: document.getElementById('greylist-name-add'),
+    greylistNames: document.getElementById('greylist-names'),
+    greylistValueInput: document.getElementById('greylist-value-input'),
+    greylistValueAdd: document.getElementById('greylist-value-add'),
+    greylistValues: document.getElementById('greylist-values'),
+  };
+
+  const STORAGE_KEYS = {
+    names: 'blacklistNames',
+    values: 'blacklistValues',
+    greyNames: 'greylistNames',
+    greyValues: 'greylistValues',
   };
 
   let currentOrigin = '';
   let allCookies = [];
+  let blacklistNames = [];
+  let blacklistValues = [];
+  let greylistNames = [];
+  let greylistValues = [];
   const expandedKeys = new Set();
+
+  function loadBlacklists() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(
+        [STORAGE_KEYS.names, STORAGE_KEYS.values, STORAGE_KEYS.greyNames, STORAGE_KEYS.greyValues],
+        (data) => {
+          blacklistNames = Array.isArray(data[STORAGE_KEYS.names]) ? data[STORAGE_KEYS.names] : [];
+          blacklistValues = Array.isArray(data[STORAGE_KEYS.values]) ? data[STORAGE_KEYS.values] : [];
+          greylistNames = Array.isArray(data[STORAGE_KEYS.greyNames]) ? data[STORAGE_KEYS.greyNames] : [];
+          greylistValues = Array.isArray(data[STORAGE_KEYS.greyValues]) ? data[STORAGE_KEYS.greyValues] : [];
+          resolve();
+        }
+      );
+    });
+  }
+
+  function saveBlacklistNames() {
+    chrome.storage.local.set({ [STORAGE_KEYS.names]: blacklistNames });
+  }
+  function saveBlacklistValues() {
+    chrome.storage.local.set({ [STORAGE_KEYS.values]: blacklistValues });
+  }
+  function saveGreylistNames() {
+    chrome.storage.local.set({ [STORAGE_KEYS.greyNames]: greylistNames });
+  }
+  function saveGreylistValues() {
+    chrome.storage.local.set({ [STORAGE_KEYS.greyValues]: greylistValues });
+  }
+
+  function matchesList(cookie, nameEntries, valueEntries) {
+    const name = (cookie.name || '').toLowerCase();
+    const value = (cookie.value || '').toLowerCase();
+    const nameMatch = nameEntries.some((entry) => name.includes(String(entry).toLowerCase().trim()));
+    const valueMatch = valueEntries.some((entry) => value.includes(String(entry).toLowerCase().trim()));
+    return nameMatch || valueMatch;
+  }
+
+  function isGreylisted(cookie) {
+    return matchesList(cookie, greylistNames, greylistValues);
+  }
+
+  function isBlacklisted(cookie) {
+    return matchesList(cookie, blacklistNames, blacklistValues);
+  }
+
+  function showConfig(show) {
+    elements.configPanel.classList.toggle('hidden', !show);
+    elements.mainToolbar.hidden = show;
+    elements.mainContent.hidden = show;
+    elements.stats.hidden = show;
+    elements.configToggle.hidden = show;
+  }
+
+  function renderBlacklistTags(listEl, items, onRemove) {
+    listEl.innerHTML = '';
+    items.forEach((item, index) => {
+      const li = document.createElement('li');
+      li.className = 'blacklist-tag';
+      const text = document.createTextNode(item);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'blacklist-tag-remove';
+      btn.setAttribute('aria-label', 'Remove');
+      btn.textContent = '×';
+      btn.addEventListener('click', () => onRemove(index));
+      li.appendChild(text);
+      li.appendChild(btn);
+      listEl.appendChild(li);
+    });
+  }
+
+  function refreshConfigPanelTags() {
+    const removeBlackName = (index) => {
+      blacklistNames.splice(index, 1);
+      saveBlacklistNames();
+      refreshConfigPanelTags();
+    };
+    const removeBlackValue = (index) => {
+      blacklistValues.splice(index, 1);
+      saveBlacklistValues();
+      refreshConfigPanelTags();
+    };
+    const removeGreyName = (index) => {
+      greylistNames.splice(index, 1);
+      saveGreylistNames();
+      refreshConfigPanelTags();
+    };
+    const removeGreyValue = (index) => {
+      greylistValues.splice(index, 1);
+      saveGreylistValues();
+      refreshConfigPanelTags();
+    };
+    renderBlacklistTags(elements.greylistNames, greylistNames, removeGreyName);
+    renderBlacklistTags(elements.greylistValues, greylistValues, removeGreyValue);
+    renderBlacklistTags(elements.blacklistNames, blacklistNames, removeBlackName);
+    renderBlacklistTags(elements.blacklistValues, blacklistValues, removeBlackValue);
+  }
 
   function cookieKey(c) {
     return (c.name || '') + '\0' + (c.domain || '') + '\0' + (c.path || '');
@@ -76,13 +204,26 @@
     list.innerHTML = '';
 
     const q = (filter || '').toLowerCase().trim();
-    const filtered = q
+    let filtered = q
       ? cookies.filter(
           (c) =>
             (c.name && c.name.toLowerCase().includes(q)) ||
             (c.value && c.value.toLowerCase().includes(q))
         )
-      : cookies;
+      : cookies.slice();
+
+    // Sort: greylisted first, then blacklisted, then rest
+    filtered.sort((a, b) => {
+      const aGrey = isGreylisted(a);
+      const bGrey = isGreylisted(b);
+      const aBlack = isBlacklisted(a);
+      const bBlack = isBlacklisted(b);
+      if (aGrey && !bGrey) return -1;
+      if (!aGrey && bGrey) return 1;
+      if (aBlack && !bBlack) return -1;
+      if (!aBlack && bBlack) return 1;
+      return 0;
+    });
 
     if (filtered.length === 0) {
       elements.emptyState.hidden = false;
@@ -109,8 +250,10 @@
       const key = cookieKey(c);
       const isExpanded = expandedKeys.has(key);
       const third = isThirdParty(c, siteHostname);
+      const greylisted = isGreylisted(c);
+      const blacklisted = isBlacklisted(c);
       const li = document.createElement('li');
-      li.className = 'cookie-item' + (third ? ' third-party' : '') + (isExpanded ? ' is-expanded' : '');
+      li.className = 'cookie-item' + (third ? ' third-party' : '') + (greylisted ? ' greylisted' : '') + (blacklisted ? ' blacklisted' : '') + (isExpanded ? ' is-expanded' : '');
       li.dataset.cookieKey = key;
 
       const expiryShort = c.expirationDate
@@ -151,6 +294,8 @@
         '<span class="cookie-row-name" title="' + nameDisplay + '">' + nameDisplay + '</span>' +
         '<span class="cookie-row-meta">' + rowMeta + '</span>' +
         flagsRow +
+        (greylisted ? '<span class="cookie-badge-greylist" title="Matches greylist (watch)">GL</span>' : '') +
+        (blacklisted ? '<span class="cookie-badge-blacklist" title="Matches blacklist">BL</span>' : '') +
         (third ? '<span class="cookie-badge">3rd</span>' : '') +
         '<span class="cookie-chevron" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5L6 7.5L9 4.5"/></svg></span>' +
         '</button>' +
@@ -200,7 +345,9 @@
     elements.totalCount.textContent = String(cookies.length);
     elements.firstPartyCount.textContent = String(first);
     elements.thirdPartyCount.textContent = String(third);
-    elements.statThird.hidden = third === 0;
+    const showBreakdown = first > 0 && third > 0;
+    elements.statFirst.hidden = !showBreakdown;
+    elements.statThird.hidden = !showBreakdown;
   }
 
   function showError(msg) {
@@ -211,12 +358,14 @@
     elements.totalCount.textContent = '0';
     elements.firstPartyCount.textContent = '0';
     elements.thirdPartyCount.textContent = '0';
+    elements.statFirst.hidden = true;
     elements.statThird.hidden = true;
   }
 
   function load() {
     elements.siteDomain.textContent = 'Loading…';
-    getCurrentTabUrl()
+    loadBlacklists()
+      .then(() => getCurrentTabUrl())
       .then(({ url, origin, hostname }) => {
         currentOrigin = origin;
         elements.siteDomain.textContent = hostname || origin;
@@ -240,6 +389,75 @@
 
   elements.refresh.addEventListener('click', () => {
     load();
+  });
+
+  function openSettings() {
+    showConfig(true);
+    refreshConfigPanelTags();
+  }
+
+  elements.configToggle.addEventListener('click', openSettings);
+  elements.btnSettings.addEventListener('click', openSettings);
+
+  elements.configClose.addEventListener('click', () => {
+    showConfig(false);
+  });
+
+  function addBlacklistName() {
+    const raw = (elements.blacklistNameInput.value || '').trim();
+    if (!raw || blacklistNames.includes(raw)) return;
+    blacklistNames.push(raw);
+    saveBlacklistNames();
+    elements.blacklistNameInput.value = '';
+    refreshConfigPanelTags();
+    renderCookies(allCookies, elements.search.value);
+  }
+
+  function addBlacklistValue() {
+    const raw = (elements.blacklistValueInput.value || '').trim();
+    if (!raw || blacklistValues.includes(raw)) return;
+    blacklistValues.push(raw);
+    saveBlacklistValues();
+    elements.blacklistValueInput.value = '';
+    refreshConfigPanelTags();
+    renderCookies(allCookies, elements.search.value);
+  }
+
+  function addGreylistName() {
+    const raw = (elements.greylistNameInput.value || '').trim();
+    if (!raw || greylistNames.includes(raw)) return;
+    greylistNames.push(raw);
+    saveGreylistNames();
+    elements.greylistNameInput.value = '';
+    refreshConfigPanelTags();
+    renderCookies(allCookies, elements.search.value);
+  }
+
+  function addGreylistValue() {
+    const raw = (elements.greylistValueInput.value || '').trim();
+    if (!raw || greylistValues.includes(raw)) return;
+    greylistValues.push(raw);
+    saveGreylistValues();
+    elements.greylistValueInput.value = '';
+    refreshConfigPanelTags();
+    renderCookies(allCookies, elements.search.value);
+  }
+
+  elements.blacklistNameAdd.addEventListener('click', addBlacklistName);
+  elements.blacklistValueAdd.addEventListener('click', addBlacklistValue);
+  elements.greylistNameAdd.addEventListener('click', addGreylistName);
+  elements.greylistValueAdd.addEventListener('click', addGreylistValue);
+  elements.blacklistNameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addBlacklistName(); }
+  });
+  elements.blacklistValueInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addBlacklistValue(); }
+  });
+  elements.greylistNameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addGreylistName(); }
+  });
+  elements.greylistValueInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addGreylistValue(); }
   });
 
   load();

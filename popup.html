@@ -14,23 +14,75 @@
           <h1 class="title">Cookies Detector</h1>
           <p class="subtitle" id="site-domain">Loading…</p>
         </div>
+        <button type="button" id="config-toggle" class="config-icon-btn" title="Settings" aria-label="Settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
         <div class="stats-inline" id="stats">
           <span class="stat-inline"><span class="stat-inline-value" id="total-count">0</span> total</span>
-          <span class="stat-inline"><span class="stat-inline-value" id="first-party-count">0</span> 1st</span>
-          <span class="stat-inline stat-third" id="stat-third" hidden><span class="stat-inline-value" id="third-party-count">0</span> 3rd</span>
+          <span class="stat-inline" id="stat-first"><span class="stat-inline-value" id="first-party-count">0</span> 1st</span>
+          <span class="stat-inline stat-third" id="stat-third"><span class="stat-inline-value" id="third-party-count">0</span> 3rd</span>
         </div>
       </div>
     </header>
 
-    <div class="toolbar">
+    <!-- Settings panel (one place for all extension config) -->
+    <div class="config-panel hidden" id="config-panel">
+      <div class="config-header">
+        <h2 class="config-title">Settings</h2>
+        <button type="button" id="config-close" class="config-close-btn" title="Back to cookies">✕</button>
+      </div>
+      <p class="config-global-note">These settings apply to <strong>all sites</strong>. Configure once and they apply everywhere.</p>
+      <p class="config-desc">Entries match by substring (full or partial). Greylist: for cookies to follow or investigate; shown first with grey style. Blacklist: confirmed unwanted; shown after grey, with orange style.</p>
+      <div class="list-section list-section-grey">
+        <h3 class="list-section-title">Greylist (watch / investigate)</h3>
+        <div class="blacklist-section">
+          <label class="blacklist-label">Cookie name greylist</label>
+          <div class="blacklist-add">
+            <input type="text" id="greylist-name-input" class="blacklist-input" placeholder="e.g. _ga, analytics" />
+            <button type="button" id="greylist-name-add" class="btn btn-add btn-add-grey">Add</button>
+          </div>
+          <ul class="blacklist-tags" id="greylist-names"></ul>
+        </div>
+        <div class="blacklist-section">
+          <label class="blacklist-label">Cookie value greylist</label>
+          <div class="blacklist-add">
+            <input type="text" id="greylist-value-input" class="blacklist-input" placeholder="e.g. tracking" />
+            <button type="button" id="greylist-value-add" class="btn btn-add btn-add-grey">Add</button>
+          </div>
+          <ul class="blacklist-tags" id="greylist-values"></ul>
+        </div>
+      </div>
+      <div class="list-section list-section-black">
+        <h3 class="list-section-title">Blacklist (confirmed unwanted)</h3>
+        <div class="blacklist-section">
+          <label class="blacklist-label">Cookie name blacklist</label>
+          <div class="blacklist-add">
+            <input type="text" id="blacklist-name-input" class="blacklist-input" placeholder="e.g. _ga, session" />
+            <button type="button" id="blacklist-name-add" class="btn btn-add">Add</button>
+          </div>
+          <ul class="blacklist-tags" id="blacklist-names"></ul>
+        </div>
+        <div class="blacklist-section">
+          <label class="blacklist-label">Cookie value blacklist</label>
+          <div class="blacklist-add">
+            <input type="text" id="blacklist-value-input" class="blacklist-input" placeholder="e.g. tracking_id" />
+            <button type="button" id="blacklist-value-add" class="btn btn-add">Add</button>
+          </div>
+          <ul class="blacklist-tags" id="blacklist-values"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar" id="main-toolbar">
       <label class="search-wrap">
         <span class="search-icon" aria-hidden="true">🔍</span>
         <input type="search" id="search" class="search" placeholder="Filter by name or value…" />
       </label>
+      <button type="button" id="btn-settings" class="btn btn-ghost" title="Settings">Settings</button>
       <button type="button" id="refresh" class="btn btn-ghost" title="Refresh">↻ Refresh</button>
     </div>
 
-    <div class="cookie-list-wrap">
+    <div class="cookie-list-wrap" id="main-content">
       <ul class="cookie-list" id="cookie-list"></ul>
       <div class="empty-state" id="empty-state" hidden>
         <p>No cookies found for this site.</p>
