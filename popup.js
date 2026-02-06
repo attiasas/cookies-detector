@@ -17,6 +17,7 @@
     stats: document.getElementById('stats'),
     headerRight: document.getElementById('header-right'),
     configToggle: document.getElementById('config-toggle'),
+    container: document.querySelector('.container'),
     configPanel: document.getElementById('config-panel'),
     configClose: document.getElementById('config-close'),
     mainToolbar: document.getElementById('main-toolbar'),
@@ -96,9 +97,7 @@
 
   function showConfig(show) {
     elements.configPanel.classList.toggle('hidden', !show);
-    elements.mainToolbar.hidden = show;
-    elements.mainContent.hidden = show;
-    elements.headerRight.hidden = show;
+    elements.container.classList.toggle('settings-open', show);
   }
 
   function renderBlacklistTags(listEl, items, onRemove) {

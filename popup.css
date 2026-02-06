@@ -221,6 +221,13 @@ body {
   display: none !important;
 }
 
+/* When settings is open: hide main content (toolbar, list, header stats/gear) */
+.container.settings-open #main-toolbar,
+.container.settings-open #main-content,
+.container.settings-open .header-right {
+  display: none !important;
+}
+
 .config-header {
   display: flex;
   align-items: center;
