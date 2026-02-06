@@ -228,31 +228,40 @@ body {
   display: none !important;
 }
 
-.config-header {
-  display: flex;
+/* Close (X) button in header when settings open - same position as gear */
+.header-close-wrap {
+  display: none;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.container.settings-open .header-close-wrap {
+  display: flex !important;
+}
+
+.header-close-wrap .config-close-btn {
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .config-title {
-  margin: 0;
+  margin: 0 0 8px 0;
   font-size: 15px;
   font-weight: 700;
   color: var(--text);
 }
 
 .config-close-btn {
-  width: 28px;
-  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   background: transparent;
   color: var(--text-muted);
-  font-size: 14px;
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
 }
