@@ -129,7 +129,7 @@
         ? new Date(c.expirationDate * 1000).toLocaleString()
         : 'Session';
 
-      const pathSegment = (c.path && c.path !== '/') ? ('<div class="cookie-detail"><span class="cookie-detail-label">Path</span><span class="cookie-detail-value">' + escapeHtml(c.path) + '</span></div>') : '';
+      const pathSegment = '<div class="cookie-detail"><span class="cookie-detail-label">Path</span><span class="cookie-detail-value">' + escapeHtml(c.path || '/') + '</span></div>';
       const domainSegment = hasThirdParty ? ('<div class="cookie-detail"><span class="cookie-detail-label">Domain</span><span class="cookie-detail-value">' + escapeHtml(c.domain || '—') + '</span></div>') : '';
       const detailsHtml =
         '<div class="cookie-detail cookie-detail-value-block"><span class="cookie-detail-label">Value</span><pre class="cookie-value">' + escapeHtml(c.value || '') + '</pre></div>' +
@@ -138,8 +138,7 @@
         '<div class="cookie-detail"><span class="cookie-detail-label">Expires</span><span class="cookie-detail-value">' + escapeHtml(String(expiryFull)) + '</span></div>' +
         '<div class="cookie-detail"><span class="cookie-detail-label">Flags</span><span class="cookie-detail-value">' + escapeHtml(meta) + '</span></div>';
       const rowMetaParts = [];
-      const pathDisplay = c.path || '/';
-      rowMetaParts.push(escapeHtml(pathDisplay));
+      if (c.path && c.path !== '/') rowMetaParts.push(escapeHtml(c.path));
       if (hasThirdParty) rowMetaParts.push(domainDisplay);
       rowMetaParts.push(expiryDisplay);
       const rowMeta = rowMetaParts.join(' · ');
