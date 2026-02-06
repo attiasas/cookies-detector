@@ -137,7 +137,11 @@
         pathSegment +
         '<div class="cookie-detail"><span class="cookie-detail-label">Expires</span><span class="cookie-detail-value">' + escapeHtml(String(expiryFull)) + '</span></div>' +
         '<div class="cookie-detail"><span class="cookie-detail-label">Flags</span><span class="cookie-detail-value">' + escapeHtml(meta) + '</span></div>';
-      const rowMeta = hasThirdParty ? (domainDisplay + ' · ' + expiryDisplay) : expiryDisplay;
+      const rowMetaParts = [];
+      if (c.path && c.path !== '/') rowMetaParts.push(escapeHtml(c.path));
+      if (hasThirdParty) rowMetaParts.push(domainDisplay);
+      rowMetaParts.push(expiryDisplay);
+      const rowMeta = rowMetaParts.join(' · ');
       li.innerHTML =
         '<button type="button" class="cookie-row" aria-expanded="' + isExpanded + '">' +
         '<span class="cookie-row-name" title="' + nameDisplay + '">' + nameDisplay + '</span>' +
