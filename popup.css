@@ -58,18 +58,26 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  gap: 12px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .config-icon-btn {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
@@ -108,11 +116,11 @@ body {
   line-height: 1.3;
 }
 
-/* Stats inline (right of title) */
+/* Stats inline (left of gear, right side of header) */
 .stats-inline {
   display: flex;
   flex-shrink: 0;
-  gap: 10px;
+  gap: 8px;
   align-items: baseline;
   font-size: 11px;
   color: var(--text-muted);

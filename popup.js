@@ -16,6 +16,7 @@
     refresh: document.getElementById('refresh'),
     btnSettings: document.getElementById('btn-settings'),
     stats: document.getElementById('stats'),
+    headerRight: document.getElementById('header-right'),
     configToggle: document.getElementById('config-toggle'),
     configPanel: document.getElementById('config-panel'),
     configClose: document.getElementById('config-close'),
@@ -98,8 +99,7 @@
     elements.configPanel.classList.toggle('hidden', !show);
     elements.mainToolbar.hidden = show;
     elements.mainContent.hidden = show;
-    elements.stats.hidden = show;
-    elements.configToggle.hidden = show;
+    elements.headerRight.hidden = show;
   }
 
   function renderBlacklistTags(listEl, items, onRemove) {
