@@ -715,6 +715,13 @@ body {
   word-break: break-all;
 }
 
+.cookie-value .value-match {
+  background: #fef08a;
+  color: #854d0e;
+  padding: 1px 2px;
+  border-radius: 2px;
+}
+
 /* Empty & error states */
 .empty-state,
 .error-state {

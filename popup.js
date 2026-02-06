@@ -264,8 +264,10 @@
 
       const pathSegment = (c.path && c.path !== '/') ? ('<div class="cookie-detail"><span class="cookie-detail-label">Path</span><span class="cookie-detail-value">' + escapeHtml(c.path) + '</span></div>') : '';
       const domainSegment = hasThirdParty ? ('<div class="cookie-detail"><span class="cookie-detail-label">Domain</span><span class="cookie-detail-value">' + escapeHtml(c.domain || '—') + '</span></div>') : '';
+      const valueHighlightEntries = [...greylist, ...blacklistValues];
+      const valueDisplayHtml = highlightValueMatches(c.value || '', valueHighlightEntries);
       const detailsHtml =
-        '<div class="cookie-detail cookie-detail-value-block"><span class="cookie-detail-label">Value</span><pre class="cookie-value">' + escapeHtml(c.value || '') + '</pre></div>' +
+        '<div class="cookie-detail cookie-detail-value-block"><span class="cookie-detail-label">Value</span><pre class="cookie-value">' + valueDisplayHtml + '</pre></div>' +
         domainSegment +
         pathSegment +
         '<div class="cookie-detail"><span class="cookie-detail-label">Expires</span><span class="cookie-detail-value">' + escapeHtml(String(expiryFull)) + '</span></div>' +
@@ -317,6 +319,43 @@
     const div = document.createElement('div');
     div.textContent = s;
     return div.innerHTML;
+  }
+
+  /** Build HTML for value with list-match substrings wrapped in <span class="value-match"> for highlighting. */
+  function highlightValueMatches(valueStr, listEntries) {
+    if (!valueStr || !listEntries.length) return escapeHtml(valueStr);
+    const valueLower = valueStr.toLowerCase();
+    const ranges = [];
+    for (const entry of listEntries) {
+      const term = String(entry).toLowerCase().trim();
+      if (!term) continue;
+      let pos = 0;
+      while (true) {
+        const idx = valueLower.indexOf(term, pos);
+        if (idx === -1) break;
+        ranges.push([idx, idx + term.length]);
+        pos = idx + 1;
+      }
+    }
+    if (ranges.length === 0) return escapeHtml(valueStr);
+    ranges.sort((a, b) => a[0] - b[0]);
+    const merged = [];
+    for (const [s, e] of ranges) {
+      if (merged.length && s <= merged[merged.length - 1][1]) {
+        merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], e);
+      } else {
+        merged.push([s, e]);
+      }
+    }
+    let html = '';
+    let lastEnd = 0;
+    for (const [s, e] of merged) {
+      html += escapeHtml(valueStr.slice(lastEnd, s));
+      html += '<span class="value-match">' + escapeHtml(valueStr.slice(s, e)) + '</span>';
+      lastEnd = e;
+    }
+    html += escapeHtml(valueStr.slice(lastEnd));
+    return html;
   }
 
   function truncate(s, max) {
