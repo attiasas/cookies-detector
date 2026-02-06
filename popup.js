@@ -116,9 +116,9 @@
       const expiryShort = c.expirationDate
         ? new Date(c.expirationDate * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })
         : 'Session';
-      const domainShort = (c.domain || '—').replace(/^\./, '');
+      const domainRaw = c.domain || '—';
       const nameDisplay = escapeHtml(c.name);
-      const domainDisplay = escapeHtml(domainShort);
+      const domainDisplay = escapeHtml(domainRaw);
       const expiryDisplay = escapeHtml(String(expiryShort));
 
       const secure = c.secure ? 'Secure' : '';
@@ -138,14 +138,20 @@
         '<div class="cookie-detail"><span class="cookie-detail-label">Expires</span><span class="cookie-detail-value">' + escapeHtml(String(expiryFull)) + '</span></div>' +
         '<div class="cookie-detail"><span class="cookie-detail-label">Flags</span><span class="cookie-detail-value">' + escapeHtml(meta) + '</span></div>';
       const rowMetaParts = [];
-      if (c.path && c.path !== '/') rowMetaParts.push(escapeHtml(c.path));
+      const pathDisplay = c.path || '/';
+      rowMetaParts.push(escapeHtml(pathDisplay));
       if (hasThirdParty) rowMetaParts.push(domainDisplay);
       rowMetaParts.push(expiryDisplay);
       const rowMeta = rowMetaParts.join(' · ');
+      const flagBadges = [];
+      if (c.httpOnly) flagBadges.push('<span class="cookie-flag" title="HttpOnly">H</span>');
+      if (c.secure) flagBadges.push('<span class="cookie-flag" title="Secure">S</span>');
+      const flagsRow = flagBadges.length ? '<span class="cookie-flags-row">' + flagBadges.join('') + '</span>' : '';
       li.innerHTML =
         '<button type="button" class="cookie-row" aria-expanded="' + isExpanded + '">' +
         '<span class="cookie-row-name" title="' + nameDisplay + '">' + nameDisplay + '</span>' +
         '<span class="cookie-row-meta">' + rowMeta + '</span>' +
+        flagsRow +
         (third ? '<span class="cookie-badge">3rd</span>' : '') +
         '<span class="cookie-chevron" aria-hidden="true"></span>' +
         '</button>' +
