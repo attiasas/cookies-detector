@@ -143,53 +143,6 @@
       },
     },
     {
-      id: 'unicode-escape',
-      label: 'Unicode escape (\\uXXXX, \\xXX)',
-      decode(str) {
-        try {
-          const value = str.replace(/\\x([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
-            .replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
-            .replace(/\\U([0-9a-fA-F]{8})/g, (_, h) => {
-              const n = parseInt(h, 16);
-              if (n > 0x10ffff) return '\\U' + h;
-              return n <= 0xffff ? String.fromCharCode(n) : String.fromCodePoint(n);
-            });
-          return { ok: true, value };
-        } catch (e) {
-          return { ok: false, error: e.message || 'Unicode escape failed' };
-        }
-      },
-    },
-    {
-      id: 'html-entities',
-      label: 'HTML entities',
-      decode(str) {
-        try {
-          const textarea = document.createElement('textarea');
-          textarea.innerHTML = str;
-          const value = textarea.value;
-          if (value === str && /&(?:#\d+|#x[0-9a-fA-F]+|\w+);/.test(str)) {
-            return { ok: false, error: 'No entities decoded (unsupported or invalid)' };
-          }
-          return { ok: true, value };
-        } catch (e) {
-          return { ok: false, error: e.message || 'HTML entity decode failed' };
-        }
-      },
-    },
-    {
-      id: 'escape-sequences',
-      label: 'Escape sequences (\\n \\t \\r \\\\)',
-      decode(str) {
-        try {
-          const value = str.replace(/\\\\/g, '\\').replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t').replace(/\\'/g, "'").replace(/\\"/g, '"');
-          return { ok: true, value };
-        } catch (e) {
-          return { ok: false, error: e.message || 'Escape sequence failed' };
-        }
-      },
-    },
-    {
       id: 'timestamp',
       label: 'Unix timestamp → date',
       decode(str) {
@@ -519,7 +472,10 @@
   function setupDecodeButton(decodeBtn, decodedBlock, rawValue) {
     if (!decodeBtn || !decodedBlock || rawValue == null) return;
     const wrap = decodeBtn.closest('.decode-btn-wrap');
-    const workingDecoders = VALUE_DECODERS.filter((d) => d.decode(rawValue).ok);
+    const workingDecoders = VALUE_DECODERS.filter((d) => {
+      const result = d.decode(rawValue);
+      return result.ok && result.value !== rawValue;
+    });
     if (workingDecoders.length === 0) {
       if (wrap) wrap.classList.add('hidden');
       return;
